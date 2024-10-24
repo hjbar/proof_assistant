@@ -1,67 +1,56 @@
 let () = Printexc.record_backtrace true
 
-(** Type variables. *)
-type tvar = string
+(** Import the definitions of terms and types *)
+open Expr
 
-(** Term variables. *)
-type var = string
+(** Construct a type from a string *)
+let ty_of_string s = Parser.ty Lexer.token (Lexing.from_string s)
 
-(** Types. *)
-type ty =
-  | TUnit
-  | TBot
-  | TVar of string
-  | TPair of ty * ty
-  | TCoprod of ty * (ty, ty) Either.t
-  | Arr of ty * ty
-
-(** Lambda terms *)
-type tm =
-  | Unit
-  | Bot of ty * tm
-  | Var of string
-  | App of tm * tm
-  | Abs of string * ty * tm
-  | Pair of tm * tm
-  | Fst of tm
-  | Snd of tm
-  | Left of ty * tm
-  | Right of ty * tm
-  | Case of tm * tm * tm
+(** Construct a term from a string *)
+let tm_of_string s = Parser.tm Lexer.token (Lexing.from_string s)
 
 (** Gives a string representation of a type *)
 let rec string_of_ty = function
-  | TUnit -> "⊤"
-  | TBot -> "⊥"
+  | True -> "⊤"
+  | False -> "⊥"
   | TVar x -> x
-  | TPair (t1, t2) ->
-    Format.sprintf "(%s ∧ %s)" (string_of_ty t1) (string_of_ty t2)
-  | TCoprod (ty1, Left ty2) ->
-    Format.sprintf "(%s ∨ %s)" (string_of_ty ty2) (string_of_ty ty1)
-  | TCoprod (ty1, Right ty2) ->
-    Format.sprintf "(%s ∨ %s)" (string_of_ty ty1) (string_of_ty ty2)
-  | Arr (t1, t2) ->
-    Format.sprintf "(%s ⇒ %s)" (string_of_ty t1) (string_of_ty t2)
+  | And (t1, t2) ->
+    let s1, s2 = (string_of_ty t1, string_of_ty t2) in
+    Format.sprintf "(%s ∧ %s)" s1 s2
+  | Or (t1, t2) ->
+    let s1, s2 = (string_of_ty t1, string_of_ty t2) in
+    Format.sprintf "(%s ∨ %s)" s1 s2
+  | Imp (t1, t2) ->
+    let s1, s2 = (string_of_ty t1, string_of_ty t2) in
+    Format.sprintf "(%s ⇒ %s)" s1 s2
 
 (** Gives a string representation of a term *)
 let rec string_of_tm = function
-  | Unit -> "⊤"
-  | Bot _ -> "⊥"
+  | Unit -> "()"
+  | Absurd (tm, ty) ->
+    let s1, s2 = (string_of_tm tm, string_of_ty ty) in
+    Format.sprintf "(prove (absurd : %s) → %s)" s1 s2
   | Var x -> x
-  | App (t1, t2) -> Format.sprintf "(%s %s)" (string_of_tm t1) (string_of_tm t2)
+  | App (t1, t2) ->
+    let s1, s2 = (string_of_tm t1, string_of_tm t2) in
+    Format.sprintf "(%s %s)" s1 s2
   | Abs (x, ty, tm) ->
-    Format.sprintf "(fun (%s : %s) -> %s)" x (string_of_ty ty) (string_of_tm tm)
+    let s1, s2, s3 = (x, string_of_ty ty, string_of_tm tm) in
+    Format.sprintf "(λ (%s : %s) → %s)" s1 s2 s3
   | Pair (t1, t2) ->
-    Format.sprintf "(%s ∧ %s)" (string_of_tm t1) (string_of_tm t2)
+    let s1, s2 = (string_of_tm t1, string_of_tm t2) in
+    Format.sprintf "(%s, %s)" s1 s2
   | Fst tm -> Format.sprintf "(π₁ %s)" (string_of_tm tm)
   | Snd tm -> Format.sprintf "(π₂ %s)" (string_of_tm tm)
-  | Left (ty, tm) ->
-    Format.sprintf "(ιₗ (Right : %s) -> %s)" (string_of_ty ty) (string_of_tm tm)
+  | Left (tm, ty) ->
+    let s1, s2 = (string_of_ty ty, string_of_tm tm) in
+    Format.sprintf "(ιₗ (right : %s) → %s)" s1 s2
   | Right (ty, tm) ->
-    Format.sprintf "(ιᵣ (Left : %s) -> %s)" (string_of_ty ty) (string_of_tm tm)
+    let s1, s2 = (string_of_ty ty, string_of_tm tm) in
+    Format.sprintf "(ιᵣ (left : %s) → %s)" s1 s2
   | Case (t1, t2, t3) ->
-    Format.sprintf "(case %s, %s, %s)" (string_of_tm t1) (string_of_tm t2)
-      (string_of_tm t3)
+    let s1, s2, s3 = (string_of_tm t1, string_of_tm t2, string_of_tm t3) in
+    Format.sprintf "(case %s of %s | %s)" s1 s2 s3
 
 (** Type for typing contexts *)
 type context = (var * ty) list
@@ -69,53 +58,45 @@ type context = (var * ty) list
 (** Exception for typing error *)
 exception Type_error
 
-(** Comparisons on types *)
-let ( =* ) t1 t2 =
-  match (t1, t2) with
-  | TCoprod (ty1, Left ty2), TCoprod (ty3, Left ty4) -> ty2 = ty4 && ty1 = ty3
-  | TCoprod (ty1, Left ty2), TCoprod (ty3, Right ty4) -> ty2 = ty3 && ty1 = ty4
-  | TCoprod (ty1, Right ty2), TCoprod (ty3, Left ty4) -> ty1 = ty4 && ty2 = ty3
-  | TCoprod (ty1, Right ty2), TCoprod (ty3, Right ty4) -> ty1 = ty3 && ty2 = ty4
-  | ty1, ty2 -> ty1 = ty2
-
-let ( <>* ) t1 t2 = not (t1 =* t2)
-
 (** Infers the type of a term t in a given context Γ *)
 let rec infer_type env = function
-  | Unit -> TUnit
-  | Bot (ty, tm) ->
-    check_type env tm TBot;
+  | Unit -> True
+  | Absurd (tm, ty) ->
+    check_type env tm False;
     ty
   | Var x -> begin
-    match List.assoc_opt x env with None -> raise Type_error | Some ty -> ty
+    match List.assoc_opt x env with
+    | None -> raise Type_error
+    | Some ty -> ty
   end
   | App (t1, t2) -> begin
     match infer_type env t1 with
-    | Arr (ty1, ty2) ->
+    | Imp (ty1, ty2) ->
       check_type env t2 ty1;
       ty2
     | _ -> raise Type_error
   end
-  | Abs (x, ty, tm) -> Arr (ty, infer_type ((x, ty) :: env) tm)
-  | Pair (t1, t2) -> TPair (infer_type env t1, infer_type env t2)
+  | Abs (x, ty, tm) -> Imp (ty, infer_type ((x, ty) :: env) tm)
+  | Pair (t1, t2) -> And (infer_type env t1, infer_type env t2)
   | Fst tm -> begin
-    match infer_type env tm with TPair (ty, _) -> ty | _ -> raise Type_error
+    match infer_type env tm with
+    | And (ty, _) -> ty
+    | _ -> raise Type_error
   end
   | Snd tm -> begin
-    match infer_type env tm with TPair (_, ty) -> ty | _ -> raise Type_error
+    match infer_type env tm with
+    | And (_, ty) -> ty
+    | _ -> raise Type_error
   end
-  | Left (ty, tm) -> TCoprod (ty, Left (infer_type env tm))
-  | Right (ty, tm) -> TCoprod (ty, Right (infer_type env tm))
+  | Left (tm, ty) -> Or (infer_type env tm, ty)
+  | Right (ty, tm) -> Or (ty, infer_type env tm)
   | Case (t1, t2, t3) -> begin
     match (infer_type env t1, infer_type env t2, infer_type env t3) with
-    | TCoprod (ty_r, Left ty_l), Arr (ty1, ty2), Arr (ty3, ty4)
-      when ty_l =* ty1 && ty_r =* ty3 && ty2 =* ty4 ->
-      ty4
-    | TCoprod (ty_l, Right ty_r), Arr (ty1, ty2), Arr (ty3, ty4)
-      when ty_l =* ty1 && ty_r =* ty3 && ty2 =* ty4 ->
+    | Or (ty_l, ty_r), Imp (ty1, ty2), Imp (ty3, ty4)
+      when ty_l = ty1 && ty_r = ty3 && ty2 = ty4 ->
       ty4
     | _ -> raise Type_error
   end
 
-(** checks whether a term has a given type *)
-and check_type env tm ty = if infer_type env tm <>* ty then raise Type_error
+(** Checks whether a term has a given type *)
+and check_type env tm ty = if infer_type env tm <> ty then raise Type_error

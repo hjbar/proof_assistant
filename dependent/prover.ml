@@ -1,5 +1,3 @@
-let () = Printexc.record_backtrace true
-
 (** Variables. *)
 type var = string
 
@@ -13,7 +11,7 @@ type expr =
   | Nat
   | Z
   | S of expr
-  | Ind of expr * expr * expr * expr 
+  | Ind of expr * expr * expr * expr
   | Eq of expr * expr
   | Refl of expr
   | J of expr * expr * expr * expr * expr

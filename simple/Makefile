@@ -1,6 +1,16 @@
-all:
-	dune exec ./prover.exe
+default: clear clean fmt build exec
 
-# You can add more tests here
-test:
-	cat k.proof | dune exec ./prover.exe
+clean:
+	@dune clean
+
+build:
+	@dune build
+
+fmt:
+	@dune fmt
+
+clear:
+	@clear
+
+exec:
+	@dune exec ./main.exe

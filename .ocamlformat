@@ -1,6 +1,6 @@
 version=0.26.1
 assignment-operator=end-line
-break-cases=fit
+break-cases=all
 break-fun-decl=wrap
 break-fun-sig=wrap
 break-infix=wrap
