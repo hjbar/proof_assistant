@@ -210,6 +210,25 @@ let test_parsing () =
     end
     l
 
+let test_string_of_ctx () =
+  let res =
+    string_of_ctx
+      [ ("x", Imp (TVar "A", TVar "B"))
+      ; ("y", And (TVar "A", TVar "B"))
+      ; ("z", True)
+      ]
+  in
+  let obj = "x : (A ⇒ B), y : (A ∧ B), z : ⊤" in
+  assert (res = obj)
+
+let test_string_of_seq () =
+  let res =
+    string_of_seq
+      ([ ("x", Imp (TVar "A", TVar "B")); ("y", TVar "A") ], TVar "B")
+  in
+  let obj = "x : (A ⇒ B), y : A ⊢ B" in
+  assert (res = obj)
+
 (** General testing function *)
 
 let all_test () =
@@ -221,4 +240,6 @@ let all_test () =
   test_truth ();
   test_disjunction ();
   test_bot ();
-  test_parsing ()
+  test_parsing ();
+  test_string_of_ctx ();
+  test_string_of_seq ()

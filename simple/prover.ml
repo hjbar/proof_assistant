@@ -1,5 +1,3 @@
-let () = Printexc.record_backtrace true
-
 (** Import the definitions of terms and types *)
 open Expr
 
@@ -52,12 +50,6 @@ let rec string_of_tm = function
     let s1, s2, s3 = (string_of_tm t1, string_of_tm t2, string_of_tm t3) in
     Format.sprintf "(case %s of %s | %s)" s1 s2 s3
 
-(** Type for typing contexts *)
-type context = (var * ty) list
-
-(** Exception for typing error *)
-exception Type_error
-
 (** Infers the type of a term t in a given context Γ *)
 let rec infer_type env = function
   | Unit -> True
@@ -100,3 +92,13 @@ let rec infer_type env = function
 
 (** Checks whether a term has a given type *)
 and check_type env tm ty = if infer_type env tm <> ty then raise Type_error
+
+(** Gives the string representation of a context *)
+let string_of_ctx (ctx : context) =
+  ctx
+  |> List.map (fun (x, ty) -> Format.sprintf "%s : %s" x (string_of_ty ty))
+  |> String.concat ", "
+
+(** Gives the string representation of a sequent *)
+let string_of_seq ((ctx, ty) : sequent) =
+  Format.sprintf "%s ⊢ %s" (string_of_ctx ctx) (string_of_ty ty)
