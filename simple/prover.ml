@@ -69,13 +69,16 @@ type context = (var * ty) list
 (** Exception for typing error *)
 exception Type_error
 
-let ty_eq t1 t2 =
+(** Comparisons on types *)
+let ( =* ) t1 t2 =
   match (t1, t2) with
   | TCoprod (ty1, Left ty2), TCoprod (ty3, Left ty4) -> ty2 = ty4 && ty1 = ty3
   | TCoprod (ty1, Left ty2), TCoprod (ty3, Right ty4) -> ty2 = ty3 && ty1 = ty4
   | TCoprod (ty1, Right ty2), TCoprod (ty3, Left ty4) -> ty1 = ty4 && ty2 = ty3
   | TCoprod (ty1, Right ty2), TCoprod (ty3, Right ty4) -> ty1 = ty3 && ty2 = ty4
   | ty1, ty2 -> ty1 = ty2
+
+let ( <>* ) t1 t2 = not (t1 =* t2)
 
 (** Infers the type of a term t in a given context Γ *)
 let rec infer_type env = function
@@ -106,14 +109,13 @@ let rec infer_type env = function
   | Case (t1, t2, t3) -> begin
     match (infer_type env t1, infer_type env t2, infer_type env t3) with
     | TCoprod (ty_r, Left ty_l), Arr (ty1, ty2), Arr (ty3, ty4)
-      when ty_eq ty_l ty1 && ty_eq ty_r ty3 && ty_eq ty2 ty4 ->
+      when ty_l =* ty1 && ty_r =* ty3 && ty2 =* ty4 ->
       ty4
     | TCoprod (ty_l, Right ty_r), Arr (ty1, ty2), Arr (ty3, ty4)
-      when ty_l = ty1 && ty_r = ty3 && ty2 = ty4 ->
+      when ty_l =* ty1 && ty_r =* ty3 && ty2 =* ty4 ->
       ty4
     | _ -> raise Type_error
   end
 
 (** checks whether a term has a given type *)
-and check_type env tm ty =
-  if not @@ ty_eq (infer_type env tm) ty then raise Type_error
+and check_type env tm ty = if infer_type env tm <>* ty then raise Type_error
