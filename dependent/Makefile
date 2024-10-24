@@ -13,4 +13,4 @@ clear:
 	@clear
 
 exec:
-	@dune exec ./main.exe
+	@dune exec --debug-backtraces ./main.exe
