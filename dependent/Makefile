@@ -1,4 +1,16 @@
-all:
-	dune build
+default: clear clean fmt build exec
 
-test:
+clean:
+	@dune clean
+
+build:
+	@dune build
+
+fmt:
+	@dune fmt
+
+clear:
+	@clear
+
+exec:
+	@dune exec ./main.exe
