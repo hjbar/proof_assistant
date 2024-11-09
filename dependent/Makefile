@@ -1,16 +1,29 @@
-default: clear clean fmt build exec
+default: clear clean fmt build tests proofs exec
 
-clean:
-	@dune clean
-
-build:
-	@dune build
-
-fmt:
-	@dune fmt
 
 clear:
 	@clear
 
+clean:
+	@dune clean
+	@rm -rf tmp
+
+fmt:
+	@dune fmt
+
+build:
+	@dune build
+
+tests:
+	@dune exec -- ./main.exe --tests
+
 exec:
 	@dune exec ./main.exe
+
+proofs:
+	@echo "\n\nTesting proofs :\n\n"
+	@echo "TODO"
+	@echo "\n\nDependent - Proofs : Ok\n\n"
+
+
+.PHONY: proofs

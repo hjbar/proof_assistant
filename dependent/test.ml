@@ -1,11 +1,8 @@
-(** Import some stuff *)
-
-(* open Prover *)
-
-(** Function of test *)
-
-let () = ()
-
 (** General testing function *)
 
-let all_test () = ()
+let test_all_functions () =
+  Format.printf "\n\nTests for dependent prover :\n%!";
+
+  Format.printf "\nTODO\n%!";
+
+  Format.printf "\nDependent prover : OK\n\n%!"

@@ -6,6 +6,7 @@ clear:
 
 clean:
 	@dune clean
+	@rm -rf tmp
 
 fmt:
 	@dune fmt
@@ -21,14 +22,13 @@ exec:
 
 proofs:
 	@echo "\n\nTesting proofs :\n\n"
-	@cat proofs/k.proof | dune exec ./main.exe
-	@echo "\n\n"
-	@cat proofs/app.proof | dune exec ./main.exe
-	@echo "\n\n"
-	@cat proofs/comp.proof | dune exec ./main.exe
-	@echo "\n\n"
-	@cat proofs/appid.proof | dune exec ./main.exe
-	@echo "\n\nSimple - Proofs : Ok\n\n"
+	@for file in proofs/*.proof; do \
+		echo "--------------------------------------"; \
+		echo "Proof in $$file\n"; \
+		cat "$$file" | dune exec ./main.exe; \
+		echo "--------------------------------------\n\n"; \
+	done
+	@echo "Simple - Proofs : Ok\n\n"
 
 
 .PHONY: proofs

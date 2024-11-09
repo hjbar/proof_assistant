@@ -235,7 +235,7 @@ let test_string_of_seq () =
 (** General testing function *)
 
 let test_all_functions () =
-  Format.printf "\n\nTests for simple prover :\n\n%!";
+  Format.printf "\n\nTests for simple prover :\n%!";
 
   test_string_of_ty ();
   test_string_of_tm ();
@@ -249,4 +249,4 @@ let test_all_functions () =
   test_string_of_ctx ();
   test_string_of_seq ();
 
-  Format.printf "\n\nSimple prover : OK\n\n%!"
+  Format.printf "\nSimple prover : OK\n\n%!"

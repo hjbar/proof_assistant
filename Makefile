@@ -1,9 +1,17 @@
-default: simple dependent
+default: clear clean fmt build
 
-simple:
-	$(MAKE) -C simple exec
 
-dependent:
-	$(MAKE) -C dependent exec
+clear:
+	@clear
 
-.PHONY: default simple dependent
+clean fmt build tests proofs exec:
+	@echo "--------------------------\n"
+	@echo "Simple :\n"
+	@$(MAKE) -C simple $@
+	@echo "--------------------------\n"
+	@echo "Dependent :\n"
+	@$(MAKE) -C dependent $@
+	@echo "--------------------------\n"
+
+
+.PHONY: proofs
