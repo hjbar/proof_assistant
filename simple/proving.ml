@@ -71,17 +71,19 @@ let rec prove env a out_c =
 (** Main function of the interactive prover *)
 let main () =
   print_endline "Please enter the formula to prove:";
-  let a_str = input_line stdin in
-  let a = ty_of_string a_str in
+  let a = input_line stdin in
+  let a = ty_of_string a in
 
   let () =
     try Sys.mkdir "tmp" 0o775 with
     | _ -> ()
   in
-  let out_c = open_out_gen [ Open_creat; Open_wronly ] 0o664 "tmp/tmp.proof" in
+  let out_c =
+    open_out_gen [ Open_creat; Open_trunc; Open_wronly ] 0o664 "tmp/tmp.proof"
+  in
 
   print_endline "Let's prove it.";
-  output_string out_c @@ Format.sprintf "%s\n" a_str;
+  output_string out_c @@ Format.sprintf "%s\n" (string_of_ty a);
   let t = prove [] a out_c in
   print_endline "done.";
 
