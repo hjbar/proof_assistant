@@ -1,0 +1,8 @@
+(((A ∨ (A ⇒ ⊥)) ⇒ ⊥) ⇒ ⊥)
+intro d
+elim d
+right 
+intro x
+elim d
+left 
+exact x

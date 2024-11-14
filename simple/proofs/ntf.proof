@@ -1,0 +1,4 @@
+((⊤ ⇒ ⊥) ⇒ ⊥)
+intro f
+elim f
+intro 

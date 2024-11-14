@@ -1,0 +1,5 @@
+(((⊥ ⇒ ⊥) ⇒ ⊥) ⇒ ⊥)
+intro f
+elim f
+intro b
+elim b

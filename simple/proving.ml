@@ -75,6 +75,10 @@ let rec prove env a out_c =
         let t1 = prove env (Imp (l, a)) out_c in
         let t2 = prove env (Imp (r, a)) out_c in
         Case (Var arg, t1, t2)
+      | False ->
+        write_cmd ();
+
+        Absurd (Var arg, a)
       | _ -> error "Don't know how to eliminate this."
   end
   | "cut" -> begin
