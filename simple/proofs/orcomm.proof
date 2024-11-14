@@ -1,0 +1,9 @@
+((A ∨ B) ⇒ (B ∨ A))
+intro d
+elim d
+intro x
+right 
+exact x
+intro y
+left 
+exact y

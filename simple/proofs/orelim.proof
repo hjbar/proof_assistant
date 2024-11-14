@@ -1,0 +1,11 @@
+((A ∨ B) ⇒ ((A ⇒ C) ⇒ ((B ⇒ C) ⇒ C)))
+intro d
+intro f
+intro g
+elim d
+intro x
+elim f
+exact x
+intro y
+elim g
+exact y
