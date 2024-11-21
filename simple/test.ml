@@ -145,6 +145,25 @@ let test_bot () =
   let res = "((A ∧ (A ⇒ ⊥)) ⇒ B)" in
   assert (proof = res)
 
+let test_nat () =
+  let res = infer_type [] Zero in
+  let obj = Nat in
+  assert (res = obj);
+
+  let res = infer_type [] @@ Suc Zero in
+  let obj = Nat in
+  assert (res = obj);
+
+  let res =
+    infer_type []
+    @@ Abs
+         ( "z"
+         , TVar "A"
+         , Rec (Zero, Var "z", Abs ("x", Nat, Abs ("y", TVar "A", Var "y"))) )
+  in
+  let obj = Imp (TVar "A", TVar "A") in
+  assert (res = obj)
+
 let test_parsing () =
   let l =
     [ ("A => B", "(A ⇒ B)")
@@ -160,6 +179,8 @@ let test_parsing () =
     ; ("_", "⊥")
     ; ("⊥", "⊥")
     ; ("(A => B) => A => B", "((A ⇒ B) ⇒ (A ⇒ B))")
+    ; ("Nat", "ℕ")
+    ; ("ℕ", "ℕ")
     ]
   in
 
@@ -198,6 +219,14 @@ let test_parsing () =
       , "(case t of (λ (x : A) → u) | (λ (y : B) → v))" )
     ; ( "case t of λ (x : A) → u | λ (y : B) → v"
       , "(case t of (λ (x : A) → u) | (λ (y : B) → v))" )
+    ; ("zero", "0")
+    ; ("0", "0")
+    ; ("suc zero", "(suc 0)")
+    ; ("suc 0", "(suc 0)")
+    ; ("S zero", "(suc 0)")
+    ; ("S 0", "(suc 0)")
+    ; ( "rec (0, z, λ (x : Nat) → λ (y : A) → y)"
+      , "(rec 0 z (λ (x : ℕ) → (λ (y : A) → y)))" )
     ]
   in
 
@@ -245,6 +274,7 @@ let test_all_functions () =
   test_truth ();
   test_disjunction ();
   test_bot ();
+  test_nat ();
   test_parsing ();
   test_string_of_ctx ();
   test_string_of_seq ();

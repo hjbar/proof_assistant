@@ -12,6 +12,7 @@ type ty =
   | And of ty * ty
   | Or of ty * ty
   | Imp of ty * ty
+  | Nat
 
 (** Lambda terms *)
 type tm =
@@ -26,6 +27,9 @@ type tm =
   | Left of tm * ty
   | Right of ty * tm
   | Case of tm * tm * tm
+  | Zero
+  | Suc of tm
+  | Rec of tm * tm * tm
 
 (** Type for typing contexts *)
 type context = (var * ty) list

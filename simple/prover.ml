@@ -21,6 +21,7 @@ let rec string_of_ty = function
   | Imp (t1, t2) ->
     let s1, s2 = (string_of_ty t1, string_of_ty t2) in
     Format.sprintf "(%s ⇒ %s)" s1 s2
+  | Nat -> "ℕ"
 
 (** Gives a string representation of a term *)
 let rec string_of_tm = function
@@ -49,6 +50,11 @@ let rec string_of_tm = function
   | Case (t1, t2, t3) ->
     let s1, s2, s3 = (string_of_tm t1, string_of_tm t2, string_of_tm t3) in
     Format.sprintf "(case %s of %s | %s)" s1 s2 s3
+  | Zero -> "0"
+  | Suc tm -> Format.sprintf "(suc %s)" (string_of_tm tm)
+  | Rec (t1, t2, t3) ->
+    let s1, s2, s3 = (string_of_tm t1, string_of_tm t2, string_of_tm t3) in
+    Format.sprintf "(rec %s %s %s)" s1 s2 s3
 
 (** Infers the type of a term t in a given context Γ *)
 let rec infer_type env = function
@@ -87,6 +93,15 @@ let rec infer_type env = function
     | Or (ty_l, ty_r), Imp (ty1, ty2), Imp (ty3, ty4)
       when ty_l = ty1 && ty_r = ty3 && ty2 = ty4 ->
       ty4
+    | _ -> raise Type_error
+  end
+  | Zero -> Nat
+  | Suc tm ->
+    check_type env tm Nat;
+    Nat
+  | Rec (t1, t2, t3) -> begin
+    match (infer_type env t1, infer_type env t2, infer_type env t3) with
+    | Nat, ty1, Imp (Nat, Imp (ty2, ty3)) when ty1 = ty2 && ty2 = ty3 -> ty3
     | _ -> raise Type_error
   end
 

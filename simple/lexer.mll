@@ -36,6 +36,13 @@ rule token = parse
   | ","      { COMMA  }
   | "->"     { TO     }
   | "→"      { TO     }
+  | "Nat"    { NAT    }
+  | "ℕ"      { NAT    }
+  | "zero"   { ZERO   }
+  | "0"      { ZERO   }
+  | "suc"    { SUC    }
+  | "S"      { SUC    }
+  | "rec"    { REC    }
 
   | (['A'-'Z''a'-'z''0'-'9']+ as s) { IDENT s }
 
