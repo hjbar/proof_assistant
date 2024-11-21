@@ -1,0 +1,7 @@
+(ℕ ⇒ ℕ)
+intro n
+elim n
+zero 
+intro k
+intro ih
+exact k

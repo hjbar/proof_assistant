@@ -79,6 +79,12 @@ let rec prove env a out_c =
         write_cmd ();
 
         Absurd (Var arg, a)
+      | Nat ->
+        write_cmd ();
+
+        let base = prove env a out_c in
+        let induction = prove env (Imp (Nat, Imp (a, a))) out_c in
+        Rec (Var arg, base, induction)
       | _ -> error "Don't know how to eliminate this."
   end
   | "cut" -> begin
@@ -109,6 +115,25 @@ let rec prove env a out_c =
       let t = prove env b out_c in
       Right (a, t)
     | _ -> error "Don't know how to left this"
+  end
+  | "zero" -> begin
+    match a with
+    | Nat ->
+      write_cmd ();
+
+      Zero
+    | _ -> error "Don't know how to zero this"
+  end
+  | "suc" -> begin
+    let ty_opt = List.assoc_opt arg env in
+    if Option.is_none ty_opt then error "This variable is not in the context."
+    else
+      match Option.get ty_opt with
+      | Nat ->
+        write_cmd ();
+
+        Suc (Var arg)
+      | _ -> error "Don't know how to suc this"
   end
   | "exact" ->
     let t = tm_of_string arg in

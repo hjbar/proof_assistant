@@ -1,0 +1,8 @@
+(ℕ ⇒ (ℕ ⇒ ℕ))
+intro n
+intro m
+elim n
+exact m
+intro k
+intro ih
+suc ih
