@@ -1,0 +1,18 @@
+((A ⇒ (A ⇒ ⊥)) ⇒ (((A ⇒ ⊥) ⇒ A) ⇒ ⊥))
+intro f
+intro g
+cut A => _
+intro nx
+cut A
+intro x
+elim nx
+exact x
+elim g
+exact nx
+intro x
+cut A => _
+intro nx
+elim nx
+exact x
+elim f
+exact x

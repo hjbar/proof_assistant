@@ -1,0 +1,12 @@
+(((A ⇒ ⊥) ∨ B) ⇒ (A ⇒ B))
+intro d
+intro x
+elim d
+intro f
+cut _
+intro b
+elim b
+elim f
+exact x
+intro y
+exact y
