@@ -88,15 +88,12 @@ let rec prove env a out_c =
       | _ -> error "Don't know how to eliminate this."
   end
   | "cut" -> begin
-    match a with
-    | Imp _ ->
-      write_cmd ();
+    write_cmd ();
 
-      let x = ty_of_string arg in
-      let t2 = prove env (Imp (x, a)) out_c in
-      let t1 = prove env x out_c in
-      App (t1, t2)
-    | _ -> error "Don't know how to cut this"
+    let x = ty_of_string arg in
+    let t1 = prove env (Imp (x, a)) out_c in
+    let t2 = prove env x out_c in
+    App (t1, t2)
   end
   | "left" -> begin
     match a with
