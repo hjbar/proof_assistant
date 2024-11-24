@@ -1,0 +1,7 @@
+((A ⇒ (B ⇒ C)) ⇒ ((A ∧ B) ⇒ C))
+intro f
+intro d
+cut B
+elim f
+fst d
+snd d

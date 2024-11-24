@@ -1,0 +1,16 @@
+((A ∧ (B ∨ C)) ⇒ ((A ∧ B) ∨ (A ∧ C)))
+intro c
+cut B \/ C
+intro d
+elim d
+intro x
+left 
+intro 
+fst c
+exact x
+intro x
+right 
+intro 
+fst c
+exact x
+snd c
