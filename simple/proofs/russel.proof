@@ -3,16 +3,14 @@ intro f
 intro g
 cut A => _
 intro nx
+elim nx
 cut A
 intro x
-elim nx
 exact x
 elim g
 exact nx
 intro x
-cut A => _
-intro nx
-elim nx
-exact x
+cut A
 elim f
+exact x
 exact x
