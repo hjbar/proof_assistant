@@ -5,7 +5,7 @@ let () = Printexc.record_backtrace true
 (** Main *)
 
 let () =
-  if Array.length Sys.argv = 1 then Proving.main ()
+  if Array.length Sys.argv = 1 then Interaction.main ()
   else if Array.length Sys.argv = 2 && Sys.argv.(1) = "--tests" then
     Test.test_all_functions ()
   else begin

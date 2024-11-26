@@ -22,7 +22,12 @@ exec:
 
 proofs:
 	@echo "\n\nTesting proofs :\n\n"
-	@echo "TODO"
+	@for file in proofs/*.proof; do \
+		echo "--------------------------------------"; \
+		echo "Proof in $$file\n"; \
+		cat "$$file" | dune exec ./main.exe; \
+		echo "--------------------------------------\n\n"; \
+	done
 	@echo "\n\nDependent - Proofs : Ok\n\n"
 
 
