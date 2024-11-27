@@ -18,3 +18,6 @@ type expr =
 
 (** Context *)
 type context = (var * (expr * expr option)) list
+
+(** Exception for typing error *)
+exception Type_error of string

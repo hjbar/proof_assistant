@@ -115,7 +115,48 @@ let rec alpha t1 t2 =
   | _ -> false
 
 (** Determines whether two terms are αβ-convertible *)
-let conv ctx t1 t2 =
+let conv (ctx : context) t1 t2 =
   let t1' = normalize ctx t1 in
   let t2' = normalize ctx t2 in
   alpha t1' t2'
+
+(** Raise an type error with a message *)
+let raise_error tm =
+  let msg = Format.sprintf "Term %s is not of the right type." (to_string tm) in
+  raise @@ Type_error msg
+
+let raise_not_found x =
+  let msg = Format.sprintf "Variable %s not found in context" x in
+  raise @@ Type_error msg
+
+let raise_type_error tm ty =
+  let s1, s2 = (to_string tm, to_string ty) in
+  let msg = Format.sprintf "Term %s is not of type %s." s1 s2 in
+  raise @@ Type_error msg
+
+(** Infers the type of an expression in a given context *)
+let rec infer (ctx : context) = function
+  | Type -> Type
+  | Var x -> begin
+    match List.assoc_opt x ctx with
+    | None -> raise_not_found x
+    | Some (ty, _) -> infer ctx ty
+  end
+  | App (t1, t2) as tm -> begin
+    match infer ctx t1 with
+    | Pi (_, ty1, ty2) ->
+      check ctx t2 ty1;
+      ty2
+    | _ -> raise_error tm
+  end
+  | Abs (x, ty, tm) ->
+    let ctx' = (x, (ty, None)) :: ctx in
+    Pi (x, infer ctx' ty, infer ctx' tm)
+  | Pi (x, ty, tm) ->
+    check ((x, (ty, None)) :: ctx) tm Type;
+    Type
+  | _ -> failwith "infer todo"
+
+(** Check the type of an expression in a given context *)
+and check ctx tm ty =
+  if not @@ conv ctx (infer ctx tm) ty then raise_type_error tm ty

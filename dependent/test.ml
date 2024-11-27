@@ -327,6 +327,189 @@ let test_conv () =
   let obj = true in
   assert (res = obj)
 
+let test_infer () =
+  let () =
+    try
+      let res = infer [] Type in
+      let obj = Type in
+      assert (res = obj)
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      let res = infer [ ("x", (Type, None)) ] @@ Var "x" in
+      let obj = Type in
+      assert (res = obj)
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      let res = infer [] @@ Abs ("x", Type, Var "x") in
+      let obj = Pi ("x", Type, Type) in
+      assert (res = obj)
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      let res = infer [] @@ App (Abs ("x", Type, Var "x"), Type) in
+      let obj = Type in
+      assert (res = obj)
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      let res = infer [] @@ Pi ("x", Type, Var "x") in
+      let obj = Type in
+      assert (res = obj)
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      let res = infer [ ("y", (Type, None)) ] @@ Abs ("x", Var "y", Var "x") in
+      let obj = Pi ("x", Type, Type) in
+      assert (res = obj)
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      let res =
+        infer [ ("y", (Type, None)) ] @@ App (Abs ("x", Var "y", Var "x"), Type)
+      in
+      let obj = Type in
+      assert (res = obj)
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      let res =
+        infer [ ("y", (Type, None)) ]
+        @@ Pi ("x", Var "y", Pi ("z", Var "y", Var "x"))
+      in
+      let obj = Type in
+      assert (res = obj)
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      let res = infer [ ("y", (Type, None)) ] @@ Abs ("x", Type, Var "y") in
+      let obj = Pi ("x", Type, Type) in
+      assert (res = obj)
+    with
+    | Type_error _ -> assert false
+  in
+
+  ()
+
+let test_check () =
+  let () =
+    try
+      check [] Type Type;
+      assert true
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      check [ ("x", (Type, None)) ] (Var "x") Type;
+      assert true
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      check [] (Abs ("x", Type, Var "x")) (Pi ("x", Type, Type));
+      assert true
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      check [] (App (Abs ("x", Type, Var "x"), Type)) Type;
+      assert true
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      check [] (Pi ("x", Type, Var "x")) Type;
+      assert true
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      check
+        [ ("y", (Type, None)) ]
+        (Abs ("x", Var "y", Var "x"))
+        (Pi ("x", Type, Type));
+      assert true
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      check
+        [ ("y", (Type, None)) ]
+        (App (Abs ("x", Var "y", Var "x"), Type))
+        Type;
+      assert true
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      check [] (Pi ("x", Type, Pi ("y", Var "x", Var "x"))) Type;
+      assert true
+    with
+    | Type_error _ -> assert false
+  in
+
+  let () =
+    try
+      check [] (Abs ("x", Type, Var "y")) (Pi ("x", Type, Type));
+      assert false
+    with
+    | Type_error _ -> assert true
+  in
+
+  let () =
+    try
+      check
+        [ ("A", (Type, None)); ("B", (Type, None)) ]
+        (App
+           ( Abs ("f", Pi ("x", Var "A", Var "B"), Var "f")
+           , Abs ("x", Var "A", Var "x") ) )
+        (Pi ("x", Type, Type));
+      assert false
+    with
+    | Type_error _ -> assert true
+  in
+
+  ()
+
 (** General testing function *)
 
 let test_all_functions () =
@@ -338,5 +521,7 @@ let test_all_functions () =
   test_normalize ();
   test_alpha ();
   test_conv ();
+  test_infer ();
+  test_check ();
 
   Format.printf "\nDependent prover : OK\n\n%!"
