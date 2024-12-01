@@ -1,13 +1,16 @@
-let main () = Format.printf "\nTODO\n"
+open Expr
+open Prover
 
-(*
+let main () =
   let env = ref [] in
   let loop = ref true in
+
   let () =
     try Sys.mkdir "tmp" 0o775 with
     | _ -> ()
   in
   let file = open_out "tmp/interactive.proof" in
+
   let split c s =
     try
       let n = String.index s c in
@@ -16,16 +19,19 @@ let main () = Format.printf "\nTODO\n"
     with
     | Not_found -> (s, "")
   in
+
   while !loop do
     try
       print_string "? ";
       flush_all ();
+
       let cmd, arg =
         let cmd = input_line stdin in
         output_string file (cmd ^ "\n");
         print_endline cmd;
         split ' ' cmd
       in
+
       match cmd with
       | "assume" ->
         let x, sa = split ':' arg in
@@ -63,8 +69,8 @@ let main () = Format.printf "\nTODO\n"
     with
     | End_of_file -> loop := false
     | Failure err -> print_endline ("Error: " ^ err ^ ".")
-    | Type_error err -> print_endline ("Typing error :" ^ err ^ ".")
+    | Type_error err -> print_endline ("Typing error: " ^ err ^ ".")
     | Parsing.Parse_error -> print_endline "Parsing error."
   done;
+
   print_endline "Bye."
-  *)

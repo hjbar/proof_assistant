@@ -17,7 +17,23 @@ let rec to_string = function
   | Pi (x, t1, t2) ->
     let s1, s2 = (to_string t1, to_string t2) in
     Format.sprintf "(Π (%s : %s) → %s)" x s1 s2
-  | _ -> failwith "to_string todo"
+  | Nat -> "ℕ"
+  | Z -> "0"
+  | S tm -> Format.sprintf "(Suc %s)" @@ to_string tm
+  | Ind (t1, t2, t3, t4) ->
+    let s1, s2, s3, s4 =
+      (to_string t1, to_string t2, to_string t3, to_string t4)
+    in
+    Format.sprintf "(Ind %s %s %s %s)" s1 s2 s3 s4
+  | Eq (t1, t2) ->
+    let s1, s2 = (to_string t1, to_string t2) in
+    Format.sprintf "(%s = %s)" s1 s2
+  | Refl tm -> Format.sprintf "(Refl %s)" @@ to_string tm
+  | J (t1, t2, t3, t4, t5) ->
+    let s1, s2, s3, s4, s5 =
+      (to_string t1, to_string t2, to_string t3, to_string t4, to_string t5)
+    in
+    Format.sprintf "(J %s %s %s %s %s)" s1 s2 s3 s4 s5
 
 (** Returns a fresh variable name at each call *)
 let fresh_var =
@@ -31,21 +47,28 @@ let rec subst x t = function
   | Type -> Type
   | Var v when v = x -> t
   | Var _ as u -> u
-  | App (u1, u2) ->
-    let u1' = subst x t u1 in
-    let u2' = subst x t u2 in
-    App (u1', u2')
-  | Abs (v, ty, u) ->
+  | App (u1, u2) -> App (subst x t u1, subst x t u2)
+  | Abs (v, _, _) as u when v = x -> u
+  | Abs (v, u1, u2) ->
     let x' = fresh_var () in
-    let ty' = subst v (Var x') ty in
-    let u' = subst v (Var x') u in
-    Abs (x', subst x t ty', subst x t u')
-  | Pi (v, ty, u) ->
+    let u1 = subst v (Var x') u1 in
+    let u2 = subst v (Var x') u2 in
+    Abs (x', subst x t u1, subst x t u2)
+  | Pi (v, _, _) as u when v = x -> u
+  | Pi (v, u1, u2) ->
     let x' = fresh_var () in
-    let ty' = subst v (Var x') ty in
-    let u' = subst v (Var x') u in
-    Pi (x', subst x t ty', subst x t u')
-  | _ -> failwith "subst todo"
+    let u1 = subst v (Var x') u1 in
+    let u2 = subst v (Var x') u2 in
+    Pi (x', subst x t u1, subst x t u2)
+  | Nat -> Nat
+  | Z -> Z
+  | S u -> S (subst x t u)
+  | Ind (u1, u2, u3, u4) ->
+    Ind (subst x t u1, subst x t u2, subst x t u3, subst x t u4)
+  | Eq (u1, u2) -> Eq (subst x t u1, subst x t u2)
+  | Refl u -> Refl (subst x t u)
+  | J (u1, u2, u3, u4, u5) ->
+    J (subst x t u1, subst x t u2, subst x t u3, subst x t u4, subst x t u5)
 
 (** Provide the string representation of a context *)
 let string_of_context (ctx : context) =
@@ -57,12 +80,13 @@ let string_of_context (ctx : context) =
   in
   ctx |> List.rev |> List.map content_to_string |> String.concat ", "
 
-(** Computes the normal form of an expression *)
+(** Gives the value of a variable in the conetxt if it exists *)
 let ctx_lookup (ctx : context) x =
   match List.assoc_opt x ctx with
   | None -> None
-  | Some (_, value) -> value
+  | Some (_, value_opt) -> value_opt
 
+(** Computes the normal form of an expression *)
 let rec normalize (ctx : context) = function
   | Type -> Type
   | Var x as t -> begin
@@ -71,54 +95,72 @@ let rec normalize (ctx : context) = function
     | Some value -> normalize ctx value
   end
   | App (t1, t2) -> begin
-    let t1' = normalize ctx t1 in
-    let t2' = normalize ctx t2 in
-    match t1' with
-    | Abs (x, _, tm) -> normalize ctx (subst x t2' tm)
-    | _ -> App (t1', t2')
+    let t1 = normalize ctx t1 in
+    let t2 = normalize ctx t2 in
+
+    match t1 with
+    | Abs (x, _, tm) -> normalize ctx @@ subst x t2 tm
+    | _ -> App (t1, t2)
   end
-  | Abs (x, ty, tm) ->
-    let ty' = normalize ctx ty in
-    let tm' = normalize ctx tm in
-    Abs (x, ty', tm')
-  | Pi (x, ty, tm) ->
-    let ty' = normalize ctx ty in
-    let tm' = normalize ctx tm in
-    Pi (x, ty', tm')
-  | _ -> failwith "normalize todo"
+  | Abs (x, t1, t2) -> Abs (x, normalize ctx t1, normalize ctx t2)
+  | Pi (x, t1, t2) -> Pi (x, normalize ctx t1, normalize ctx t2)
+  | Nat -> Nat
+  | Z -> Z
+  | S tm -> S (normalize ctx tm)
+  | Ind (p, z, s, n) -> begin
+    let p = normalize ctx p in
+    let z = normalize ctx z in
+    let s = normalize ctx s in
+    let n = normalize ctx n in
+
+    match n with
+    | Z -> normalize ctx z
+    | S n -> normalize ctx @@ App (App (s, n), Ind (p, z, s, n))
+    | _ -> Ind (p, z, s, n)
+  end
+  | Eq (t1, t2) -> Eq (normalize ctx t1, normalize ctx t2)
+  | Refl tm -> Refl (normalize ctx tm)
+  | J (p, r, x, y, e) -> begin
+    let p = normalize ctx p in
+    let r = normalize ctx r in
+    let x = normalize ctx x in
+    let y = normalize ctx y in
+    let e = normalize ctx e in
+
+    match e with
+    | Refl z when x = y && y = z -> normalize ctx @@ App (r, z)
+    | _ -> J (p, r, x, y, e)
+  end
 
 (** Tests whether two terms are α-convertible *)
 let rec alpha t1 t2 =
   match (t1, t2) with
   | Type, Type -> true
   | Var x, Var x' -> x = x'
-  | App (t, u), App (t', u') -> alpha t t' && alpha u u'
-  | Abs (x1, ty1, tm1), Abs (x2, ty2, tm2)
-  | Pi (x1, ty1, tm1), Pi (x2, ty2, tm2) ->
-    let x = Var (fresh_var ()) in
+  | App (t1, t2), App (t1', t2') -> alpha t1 t1' && alpha t2 t2'
+  | Nat, Nat -> true
+  | Z, Z -> true
+  | S t1, S t2 -> alpha t1 t2
+  | Ind (t1, t2, t3, t4), Ind (t1', t2', t3', t4') ->
+    alpha t1 t1' && alpha t2 t2' && alpha t3 t3' && alpha t4 t4'
+  | Eq (t1, t2), Eq (t1', t2') -> alpha t1 t1' && alpha t2 t2'
+  | Refl t1, Refl t2 -> alpha t1 t2
+  | J (t1, t2, t3, t4, t5), J (t1', t2', t3', t4', t5') ->
+    alpha t1 t1' && alpha t2 t2' && alpha t3 t3' && alpha t4 t4' && alpha t5 t5'
+  | Abs (x, t1, t2), Abs (x', t1', t2')
+  | Pi (x, t1, t2), Pi (x', t1', t2') ->
+    let v = Var (fresh_var ()) in
 
-    let ty1' = subst x1 x ty1 in
-    let tm1' = subst x1 x tm1 in
+    let t1 = subst x v t1 in
+    let t2 = subst x v t2 in
+    let t1' = subst x' v t1' in
+    let t2' = subst x' v t2' in
 
-    let ty2' = subst x2 x ty2 in
-    let tm2' = subst x2 x tm2 in
-
-    alpha ty1' ty2' && alpha tm1' tm2'
-  | Nat, Nat
-  | Z, Z
-  | S _, S _
-  | Ind _, Ind _
-  | Eq _, Eq _
-  | Refl _, Refl _
-  | J _, J _ ->
-    failwith "alpha todo"
+    alpha t1 t1' && alpha t2 t2'
   | _ -> false
 
 (** Determines whether two terms are αβ-convertible *)
-let conv (ctx : context) t1 t2 =
-  let t1' = normalize ctx t1 in
-  let t2' = normalize ctx t2 in
-  alpha t1' t2'
+let conv (ctx : context) t1 t2 = alpha (normalize ctx t1) (normalize ctx t2)
 
 (** Raise an type error with a message *)
 let raise_error tm =
@@ -140,22 +182,23 @@ let rec infer (ctx : context) = function
   | Var x -> begin
     match List.assoc_opt x ctx with
     | None -> raise_not_found x
-    | Some (ty, _) -> infer ctx ty
+    | Some (ty, _) -> ty
   end
   | App (t1, t2) as tm -> begin
     match infer ctx t1 with
-    | Pi (_, ty1, ty2) ->
-      check ctx t2 ty1;
-      ty2
+    | Pi (x, u1, u2) ->
+      check ctx t2 u1;
+      subst x t2 u2
     | _ -> raise_error tm
   end
   | Abs (x, ty, tm) ->
-    let ctx' = (x, (ty, None)) :: ctx in
-    Pi (x, infer ctx' ty, infer ctx' tm)
+    let ctx = (x, (ty, None)) :: ctx in
+    Pi (x, ty, infer ctx tm)
   | Pi (x, ty, tm) ->
-    check ((x, (ty, None)) :: ctx) tm Type;
+    let ctx = (x, (ty, None)) :: ctx in
+    check ctx tm Type;
     Type
-  | _ -> failwith "infer todo"
+  | _ -> failwith "todo"
 
 (** Check the type of an expression in a given context *)
 and check ctx tm ty =
