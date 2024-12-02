@@ -35,7 +35,19 @@ let test_to_string () =
   assert (res = obj);
 
   let res = to_string @@ S Z in
-  let obj = "(Suc 0)" in
+  let obj = "1" in
+  assert (res = obj);
+
+  let res = to_string @@ S (S Z) in
+  let obj = "2" in
+  assert (res = obj);
+
+  let res = to_string @@ S (S (S Z)) in
+  let obj = "3" in
+  assert (res = obj);
+
+  let res = to_string @@ S (Var "x") in
+  let obj = "(Suc x)" in
   assert (res = obj);
 
   let p = App (Var "n", Type) in
@@ -44,8 +56,7 @@ let test_to_string () =
   let n = S (S Z) in
   let res = to_string @@ Ind (p, z, s, n) in
   let obj =
-    "(Ind (n Set) ((n Set) 0) (Π (x : ℕ) → (((n Set) n) ((n Set) (Suc n)))) \
-     (Suc (Suc 0)))"
+    "(Ind (n Set) ((n Set) 0) (Π (x : ℕ) → (((n Set) n) ((n Set) (Suc n)))) 2)"
   in
   assert (res = obj);
 

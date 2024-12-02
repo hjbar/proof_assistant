@@ -19,7 +19,7 @@ let rec to_string = function
     Format.sprintf "(Π (%s : %s) → %s)" x s1 s2
   | Nat -> "ℕ"
   | Z -> "0"
-  | S tm -> Format.sprintf "(Suc %s)" @@ to_string tm
+  | S tm -> string_of_suc tm
   | Ind (t1, t2, t3, t4) ->
     let s1, s2, s3, s4 =
       (to_string t1, to_string t2, to_string t3, to_string t4)
@@ -35,12 +35,45 @@ let rec to_string = function
     in
     Format.sprintf "(J %s %s %s %s %s)" s1 s2 s3 s4 s5
 
+(** Provides a number of a term of form S S S S S Z *)
+and string_of_suc t =
+  let rec loop t n =
+    match t with
+    | Z -> Some n
+    | S t -> loop t (n + 1)
+    | _ -> None
+  in
+  match loop t 1 with
+  | None -> Format.sprintf "(Suc %s)" @@ to_string t
+  | Some n -> string_of_int n
+
 (** Returns a fresh variable name at each call *)
 let fresh_var =
   let cpt = ref 0 in
   fun () ->
     incr cpt;
     Format.sprintf "x%d" !cpt
+
+(** Return true if the term has free variables, false otherwise *)
+let rec has_fv x = function
+  | Type
+  | Nat
+  | Z ->
+    false
+  | S tm
+  | Refl tm ->
+    has_fv x tm
+  | App (t1, t2)
+  | Eq (t1, t2) ->
+    has_fv x t1 || has_fv x t2
+  | Ind (t1, t2, t3, t4) ->
+    has_fv x t1 || has_fv x t2 || has_fv x t3 || has_fv x t4
+  | J (t1, t2, t3, t4, t5) ->
+    has_fv x t1 || has_fv x t2 || has_fv x t3 || has_fv x t4 || has_fv x t5
+  | Var v -> v = x
+  | Abs (v, t1, t2)
+  | Pi (v, t1, t2) ->
+    if v = x then false else has_fv x t1 || has_fv x t2
 
 (** Provide the term obtained by replacing the variable x by t in u *)
 let rec subst x t = function
@@ -49,17 +82,19 @@ let rec subst x t = function
   | Var _ as u -> u
   | App (u1, u2) -> App (subst x t u1, subst x t u2)
   | Abs (v, _, _) as u when v = x -> u
-  | Abs (v, u1, u2) ->
+  | Abs (v, u1, u2) when has_fv v t ->
     let x' = fresh_var () in
     let u1 = subst v (Var x') u1 in
     let u2 = subst v (Var x') u2 in
     Abs (x', subst x t u1, subst x t u2)
+  | Abs (v, u1, u2) -> Abs (v, subst x t u1, subst x t u2)
   | Pi (v, _, _) as u when v = x -> u
-  | Pi (v, u1, u2) ->
+  | Pi (v, u1, u2) when has_fv v t ->
     let x' = fresh_var () in
     let u1 = subst v (Var x') u1 in
     let u2 = subst v (Var x') u2 in
     Pi (x', subst x t u1, subst x t u2)
+  | Pi (v, u1, u2) -> Pi (v, subst x t u1, subst x t u2)
   | Nat -> Nat
   | Z -> Z
   | S u -> S (subst x t u)
@@ -192,13 +227,57 @@ let rec infer (ctx : context) = function
     | _ -> raise_error tm
   end
   | Abs (x, ty, tm) ->
-    let ctx = (x, (ty, None)) :: ctx in
-    Pi (x, ty, infer ctx tm)
+    check ctx ty Type;
+    let tm = infer ((x, (ty, None)) :: ctx) tm in
+    Pi (x, ty, tm)
   | Pi (x, ty, tm) ->
-    let ctx = (x, (ty, None)) :: ctx in
-    check ctx tm Type;
+    check ctx ty Type;
+    check ((x, (ty, None)) :: ctx) tm Type;
     Type
-  | _ -> failwith "todo"
+  | Nat -> Type
+  | Z -> Nat
+  | S tm ->
+    check ctx tm Nat;
+    Nat
+  | Ind (p, z, s, n) ->
+    let p_val = Pi ("n", Nat, Type) in
+    let z_val = App (p, Z) in
+    let s_val =
+      Pi ("n", Nat, Pi ("e", App (p, Var "n"), App (p, S (Var "n"))))
+    in
+    let n_val = Nat in
+
+    check ctx p p_val;
+    check ctx z z_val;
+    check ctx s s_val;
+    check ctx n n_val;
+
+    App (p, n)
+  | Eq (t1, t2) ->
+    let t1 = infer ctx t1 in
+    let t2 = infer ctx t2 in
+
+    if not @@ conv ctx t1 t2 then raise_type_error t1 t2;
+    Type
+  | Refl tm ->
+    infer ctx tm |> ignore;
+    Eq (tm, tm)
+  | J (p, r, x, y, e) ->
+    let x_typ = infer ctx x in
+    check ctx y x_typ;
+
+    let p_val =
+      Pi ("x", x_typ, Pi ("y", x_typ, Pi ("e", Eq (Var "x", Var "y"), Type)))
+    in
+    (* let r_val = Pi ("x", x_typ, App (App (App (p, Var "x"), Var "x"), Refl (Var "x"))) in *)
+    let r_val = Pi ("x", x_typ, Type) in
+    let e_val = Eq (x, y) in
+
+    check ctx p p_val;
+    check ctx r r_val;
+    check ctx e e_val;
+
+    App (App (App (p, x), y), e)
 
 (** Check the type of an expression in a given context *)
 and check ctx tm ty =
