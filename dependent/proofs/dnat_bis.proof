@@ -28,4 +28,9 @@ check addz = Pi (n : Nat) -> add n Z = n
 
 
 
+define addassoc = fun (x : Nat) -> fun (y : Nat) -> fun (z : Nat) -> Ind (fun (z : Nat) -> add (add x y) z = add x (add y z)) (Refl (add x y)) (fun (z : Nat) -> fun (e : add (add x y) z = add x (add y z)) -> Seq (add (add x y) z) (add x (add y z)) e) z
+check addassoc = Pi (x : Nat) -> Pi (y : Nat) -> Pi (z : Nat) -> add (add x y) z = add x (add y z)
+
+
+
 exit
