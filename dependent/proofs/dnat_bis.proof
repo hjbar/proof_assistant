@@ -10,7 +10,7 @@ eval add (S (S (S Z))) (S (S Z))
 
 
 define p1 = fun (x : Nat) -> fun (y : Nat) -> fun (e : x = y) -> S x = S y
-define r1 = fun (x : Nat) -> p1 x x (Refl x)
+define r1 = fun (x : Nat) -> Refl (S x)
 define Seq = fun (x : Nat) -> fun (y : Nat) -> fun (e : x = y) -> J p1 r1 x y e
 check Seq = Pi (x : Nat) -> Pi (y : Nat) -> Pi (e : x = y) -> S x = S y
 

@@ -269,8 +269,9 @@ let rec infer (ctx : context) = function
     let p_val =
       Pi ("x", x_typ, Pi ("y", x_typ, Pi ("e", Eq (Var "x", Var "y"), Type)))
     in
-    (* let r_val = Pi ("x", x_typ, App (App (App (p, Var "x"), Var "x"), Refl (Var "x"))) in *)
-    let r_val = Pi ("x", x_typ, Type) in
+    let r_val =
+      Pi ("x", x_typ, App (App (App (p, Var "x"), Var "x"), Refl (Var "x")))
+    in
     let e_val = Eq (x, y) in
 
     check ctx p p_val;
