@@ -29,4 +29,19 @@ check addassoc = Pi (x : Nat) -> Pi (y : Nat) -> Pi (z : Nat) -> add (add x y) z
 
 
 
+define mul = fun (n : Nat) -> fun (m : Nat) -> Ind (fun (d : Nat) -> Nat) Z (fun (k : Nat) -> fun (d : Nat) -> add d n) m
+eval mul (S (S (S Z))) (S (S Z))
+
+
+
+define zmul = fun (n : Nat) -> Ind (fun (n : Nat) -> mul Z n = Z) (Refl Z) (fun (n : Nat) -> fun (e : mul Z n = Z) -> e) n
+check zmul = Pi (n : Nat) -> mul Z n = Z
+
+
+
+define mulz = fun (n : Nat) -> Refl Z
+check mulz = Pi (n : Nat) -> mul n Z = Z
+
+
+
 exit
