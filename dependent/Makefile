@@ -20,7 +20,7 @@ tests:
 exec:
 	@dune exec ./main.exe
 
-proofs: clear
+proofs:
 	@echo "\n\nTesting proofs :\n\n"
 	@for file in proofs/*.proof; do \
 		echo "--------------------------------------"; \
