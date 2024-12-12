@@ -51,10 +51,22 @@ let rec string_of_tm = function
     let s1, s2, s3 = (string_of_tm t1, string_of_tm t2, string_of_tm t3) in
     Format.sprintf "(case %s of %s | %s)" s1 s2 s3
   | Zero -> "0"
-  | Suc tm -> Format.sprintf "(suc %s)" (string_of_tm tm)
+  | Suc tm -> string_of_suc tm
   | Rec (t1, t2, t3) ->
     let s1, s2, s3 = (string_of_tm t1, string_of_tm t2, string_of_tm t3) in
     Format.sprintf "(rec %s %s %s)" s1 s2 s3
+
+(** Provides a number of a term of form S S S S S Z *)
+and string_of_suc t =
+  let rec loop t n =
+    match t with
+    | Zero -> Some n
+    | Suc t -> loop t (n + 1)
+    | _ -> None
+  in
+  match loop t 1 with
+  | None -> Format.sprintf "(Suc %s)" @@ string_of_tm t
+  | Some n -> string_of_int n
 
 (** Infers the type of a term t in a given context Γ *)
 let rec infer_type env = function

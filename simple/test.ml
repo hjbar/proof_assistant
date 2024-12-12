@@ -221,10 +221,10 @@ let test_parsing () =
       , "(case t of (λ (x : A) → u) | (λ (y : B) → v))" )
     ; ("zero", "0")
     ; ("0", "0")
-    ; ("suc zero", "(suc 0)")
-    ; ("suc 0", "(suc 0)")
-    ; ("S zero", "(suc 0)")
-    ; ("S 0", "(suc 0)")
+    ; ("suc zero", "1")
+    ; ("suc 0", "1")
+    ; ("S zero", "1")
+    ; ("S 0", "1")
     ; ( "rec (0, z, λ (x : Nat) → λ (y : A) → y)"
       , "(rec 0 z (λ (x : ℕ) → (λ (y : A) → y)))" )
     ]
