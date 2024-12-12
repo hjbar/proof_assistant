@@ -1,19 +1,9 @@
-# Template for the proof assistant project of CSC_51051_EP
+# Projet d'assistant de preuves du cours CSC_51051_EP
 
-This is a template for the [proof assistant project of CSC_51051_EP](https://www.lix.polytechnique.fr/Labo/Samuel.Mimram/teaching/INF551/TD/4.prover.html), which you can clone in order to get started. It contains the folders
+Il s'agit d'un fork du template pour le [projet d'assistant de preuves du cours CSC_51051_EP](https://www.lix.polytechnique.fr/Labo/Samuel.Mimram/teaching/INF551/TD/4.prover.html). Il comporte 3 grand répertoires :
 
-1. [simple](simple/): the proof assistant for propositional logic (parts 1 to 4 of the project),
-2. [dependent](dependent/): the proof assistant with dependent types (part 5),
-3. [report](report/): a template for writing the report in markdown.
+1. [simple](simple/): l'assistant de preuves pour la logique propositionnelle (parties 1 à 4).
+2. [dependent](dependent/): l'assistant de preuves avec des types dépendants (partie 5).
+3. [report](report/): le rapport avec la source Markdown.
 
-In order to build the project you can either type
-
-```bash
-make
-```
-
-or
-
-```bash
-dune build
-```
+Pour compiler le projet, il suffit de faire ```make``` à la racine afin de construire l'assistant de preuves pour les types simples et les types dépendants. De plus, on peut faire ```make tests``` pour lancer les tests unitaires, ```make proofs``` pour lancer les preuves et ```make exec``` pour seulement lancer le prouveur.
