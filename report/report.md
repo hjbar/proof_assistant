@@ -15,7 +15,7 @@ Toutes les questions non optionnelles ont été traitées. De plus, la question 
 
 ## Les types dépendants
 
-Aucune question ou partie optionnelle n'a été traitée. De plus, je n'ai pas fait toutes les preuves de la partie 5.14. Ainsi, il manque la preuve concernant la commutativité de l'addition, la commutativité de la multiplication et l'associativité de la multiplication. Elles n'ont pas été traitées par manque de temps. Le reste des questions et parties a été traité.
+Aucune question ou partie optionnelle n'a été traitée. De plus, je n'ai pas fait toutes les preuves de la partie 5.14. Ainsi, il manque la preuve concernant la commutativité de l'addition, l'élément neutre de la multiplication des deux côtés, la commutativité de la multiplication et l'associativité de la multiplication. Elles n'ont pas été traitées par manque de temps. Le reste des questions et parties a été traité.
 
 # Les difficultés encontrées
 
